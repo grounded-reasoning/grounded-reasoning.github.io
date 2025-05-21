@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="GRIT: Teaching MLLMs to Think with Images">
+  <meta name="keywords" content="GRIT, MLLMs, visual reasoning, grounded reasoning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GRIT: Teaching MLLMs to Think with Images</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="icon" href="./static/images/icon.png">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <!-- <script src="https://assets.crowd.aws/crowd-html-elements.js"></script> -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
+  <style>
+	    
+		.image-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px; /* Adjust the gap between images as needed */
+        }
+        .image-container {
+	        position: relative;            
+	        display: inline-block;
+            text-align: center;
+            width: 45%; /* Adjust the width of each container as needed */
+            
+        }
+        .image-container img {
+            width: 100%; /* Ensures the image fills the container width */
+        }
+        .image-container p {
+            font-family: "Times New Roman", Times, serif;
+            font-weight: bold;
+        }
+       
+        .image-container p {
+            font-family: "Times New Roman", Times, serif;
+            font-weight: bold;
+        }
+        .has-text-centered {
+            text-align: center;
+            font-size: 16px;
+        }
+        .has-text-left {
+            font-size: 16px;
+        }
+        
+        #image-container {
+            position: relative;
+            display: inline-block;
+        }
+        #startButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #imageModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+        #imageModalContent {
+            position: relative;
+            margin: auto;
+            padding: 0px;
+            width: 360px;
+            max-width: 360px;
+            background-color: #fff;
+            border-radius: 10px;
+        }
+        #imageContainer {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            height: auto;
+        }
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: rgba(255, 0, 0, 0.5); /* Red with 50% opacity */
+            border-radius: 50%;
+        }
+        .bbox {
+            position: absolute;
+            border: 4px solid red; /* Red border for bbox */
+        }
+        .bbox-large {
+            position: absolute;
+            border: 8px solid blue; /* Green border for bbox_large */
+        }
+        crowd-alert {
+      display: none !important;
+    }
+  </style>
+  
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <div style="display: flex; align-items: center; justify-content: center;">
+            <h1 class="title is-1 publication-title" style="display: inline-block;">GRIT:
+              <br> Teaching MLLMs to Think with Images</h1>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="http://www.yfan.site/">Yue Fan</a><sup style="color: #FFB6C1;">1</sup>,</span>
+            <span class="author-block">
+              <a href="#">Xuehai He</a><sup style="color: #FFB6C1;">1</sup>,</span>
+            <span class="author-block">
+              <a href="#">Diji Yang</a><sup style="color: #FFB6C1;">1</sup>,</span>
+            <span class="author-block">
+              <a href="#">Kaizhi Zheng</a><sup style="color: #FFB6C1;">1</sup>,</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="#">Ching-Chen Kuo</a><sup style="color: #90EE90;">2</sup>,</span>
+            <span class="author-block">
+              <a href="#">Yuting Zheng</a><sup style="color: #90EE90;">2</sup>,</span>
+            <span class="author-block">
+              <a href="#">Sravana Jyothi Narayanaraju</a><sup style="color: #90EE90;">2</sup>,</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="#">Xinze Guan</a><sup style="color: #90EE90;">2</sup>,</span>
+            <span class="author-block">
+              <a href="https://eric-xw.github.io/">Xin Eric Wang</a><sup style="color: #FFB6C1;">1</sup>,</span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup style="color: #FFB6C1;">1</sup>UC Santa Cruz,</span>
+            <span class="author-block"><sup style="color: #90EE90;">2</sup>eBay</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Recent studies have demonstrated the efficacy of using Reinforcement Learning (RL) in building reasoning models that articulate chains of thoughts prior to producing final answers. However, despite ongoing advances that aim at enabling reasoning for vision-language tasks, existing open-source visual reasoning models typically generate reasoning content with pure natural language, lacking explicit integration of visual information. This limits their ability to produce clearly articulated and visually grounded reasoning chains. To this end, we propose <strong>Reasoning with Images and Texts (GRIT)</strong>, a novel method for training MLLMs to think with images. GRIT introduces a grounded reasoning paradigm, in which models generate reasoning chains that interleave natural language and explicit bounding box coordinates. These coordinates point to regions of the input image that the model consults during its reasoning process. Additionally, GRIT is equipped with a reinforcement learning approach, GRPO-GR, built upon the GRPO algorithm. GRPO-GR employs robust rewards focused on the final answer accuracy and format of the grounded reasoning output, which eliminates the need for data with reasoning chain annotations or explicit bounding box labels. As a result, GRIT achieves exceptional data efficiency, requiring as few as 20 image-question-answer triplets from existing datasets. Comprehensive evaluations demonstrate that GRIT effectively trains MLLMs to produce coherent and visually grounded reasoning chains, showing a successful unification of reasoning and grounding abilities. All code, data, and checkpoints will be released.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-five-fifths">
+        <h2 class="title is-3">Overview</h2> 
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="image-container" style="width: 95%; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+        <img src="./static/image/web-f1.png" alt="GRIT Overview" style="max-width: 100%;">
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h3 style="text-align: left; margin-top: 15px;">
+          <strong>GRIT:</strong> Teaching MLLMs to <strong>think with images</strong> by generating reasoning chains that interleave <strong>natural language with bounding boxes</strong>. Key innovations: (1) <strong>Grounded Reasoning Paradigm</strong> - explicit visual references in reasoning; (2) <strong>GRPO-GR</strong> - reinforcement learning with just <strong>20 training samples</strong>; no manual reasoning annotations needed.
+        </h3>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-five-fifths">
+        <h2 class="title is-3">Grounded Reasoning Paradigm</h2> 
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h3 style="text-align: left; margin-bottom: 20px;">
+          We propose <strong>grounded reasoning paradigm</strong> as a light and efficient way for pre-trained MLLMs to think with images. 
+          <br>
+          The model is trained to generate reasoning chains that interleave <strong>natural language with bounding boxes</strong>.
+        </h3>
+        
+        <div style="background-color: #f9f9f9; border-radius: 10px; padding: 20px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+          <!-- <h4 style="text-align: center; margin-bottom: 15px; font-weight: bold;">Format Structure</h4> -->
+          
+          <div style="font-family: monospace; font-size: 16px; line-height: 1.4; white-space: pre-wrap; text-align: left;">
+<span style="color: #1e88e5; font-weight: bold;">&lt;think&gt;</span> <span style="color: #666666; font-style: italic;">Initial natural language reasoning with bounding boxes generated...</span> <span style="color: #666666; font-weight: bold;">[x1,y1,x2,y2]</span>  <span style="color: #666666; font-style: italic;">...</span>  <span style="color: #1e88e5; font-weight: bold;">&lt;/think&gt;</span>
+<span style="color: #4caf50; font-weight: bold;">&lt;rethink&gt;</span> <span style="color: #666666; font-style: italic;">Reasoning continues, with further analysis on image regions... </span> <span style="color: #4caf50; font-weight: bold;">&lt;/rethink&gt;</span>
+<span style="color: #ff5722; font-weight: bold;">Answer: </span><span style="color: #666666; font-style: italic;">Final response</span>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: left;">
+          <h3>
+            The model generates reasoning in <strong>one continuous pass</strong> with 
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>• <strong>Special tokens</strong> to facilitate an extensible reasoning process.</li>
+            </ul>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>• <strong>Bounding boxes tokens</strong>:
+                <ul style="margin-left: 20px;">
+                  <li>• Generated directly during autoregressive generation.</li>
+                  <li>• Influencing on subsequent reasoning directly as tokens, without any external decoding/image-retrieval process.</li>
+                
+                <li>• Flexibly generated:
+                  <ul style="margin-left: 20px;">
+                    <li>• Can be placed anywhere within the natural language reasoning.</li>
+                    <li>• With dynamic number of boxes - from zero to multiple as needed.</li>
+                  </ul>
+                </ul>
+              </li>
+              </li>
+            </ul>
+          </h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-five-fifths">
+        <h2 class="title is-3">GRPO-GR: Reinforcement Learning for Grounded Reasoning</h2> 
+      </div>
+    </div>
+    
+    <div class="columns is-centered has-text-centered">
+      <div class="image-container" style="width: 100%;box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+        <img src="./static/image/Figure2.png" alt="GRPO-GR Method">
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h3 style="text-align: left; margin-top: 20px;">
+          <p>GRIT employs GRPO-GR, a reinforcement learning approach that optimizes a policy π<sub>θ</sub> to generate reasoning sequences with three key reward components:</p>
+          
+          <p><strong>1. Grounded-reasoning-format reward (r<sub>format</sub>):</strong> Encourages proper use of reasoning structure tokens and valid bounding box syntax</p>
+          
+          <p><strong>2. Grounded-target-counting reward (r<sub>count</sub>):</strong> For counting tasks, verifies the number of bounding boxes matches the ground-truth count</p>
+          
+          <p><strong>3. GPT-aided answer-accuracy reward (r<sub>ans</sub>):</strong> Combines GPT-4o evaluation of answer correctness with BLEU similarity to ground truth</p>
+          
+          <p>This approach eliminates the need for explicit reasoning annotations or bounding box labels, achieving remarkable data efficiency with as few as 20 training examples while maintaining strong performance.</p>
+        </h3>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-five-fifths">
+        <h2 class="title is-3">Experimental Results</h2> 
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="image-container" style="width: 70%;box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+        <img src="./static/image/results.png" alt="Experimental Results">
+      </div>
+    </div>
+    <h3 style="text-align: left;">
+      Comprehensive evaluations demonstrate that GRIT effectively trains MLLMs to produce coherent and visually grounded reasoning chains. The results show a successful unification of reasoning and grounding abilities, with GRIT outperforming baseline methods in terms of both reasoning quality and visual grounding accuracy.
+    </h3>
+  </div>
+</section>
+    
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+      @article{fan2023grit,
+        title={GRIT: Teaching MLLMs to Think with Images},
+        author={Fan, Yue and He, Xuehai and Yang, Diji and Zheng, Kaizhi and Kuo, Ching-Chen and Zheng, Yuting and Narayanaraju, Sravana Jyothi and Guan, Xinze and Wang, Xin Eric},
+        journal={arXiv preprint},
+        year={2023}
+      }
+    </code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is adapted from <a rel="license"
+            href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> and <a rel="license"
+            href="https://gligen.github.io/">GLIGEN</a>, licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Additional libraries for parsing CSV -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
+
+</body>
+</html>

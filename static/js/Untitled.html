@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Click Bounding Boxes</title>
+    <style>
+        .has-text-centered {
+            text-align: center;
+            font-size: 16px;
+        }
+        #coordinates {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #startButton {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #imageModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            z-index: 1;
+        }
+        #imageModalContent {
+            position: relative;
+            margin: auto;
+            padding: 20px;
+            width: 80%;
+            max-width: 700px;
+            background-color: #fff;
+            border-radius: 10px;
+        }
+        #imageContainer {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            height: auto;
+        }
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: rgba(255, 0, 0, 0.5); /* Red with 50% opacity */
+            border-radius: 50%;
+        }
+        .bbox {
+            position: absolute;
+            border: 2px solid red; /* Red border for bbox */
+            box-sizing: border-box;
+        }
+        .bbox-large {
+            position: absolute;
+            border: 2px solid green; /* Green border for bbox_large */
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="has-text-centered">Click on the Image</h1>
+    <button id="startButton">Start</button>
+    
+    <!-- Modal for the image -->
+    <div id="imageModal">
+        <div id="imageModalContent">
+            <span id="closeModal" style="cursor: pointer; position: absolute; top: 10px; right: 20px; font-size: 28px;">&times;</span>
+            <div id="imageContainer">
+                <!-- Image will be loaded here -->
+            </div>
+            <div id="coordinates" class="has-text-centered">Click coordinates will appear here.</div>
+			<div id="output_description" class="has-text-centered">Output description will appear here.</div>
+        </div>
+    </div>
+
+    <!-- Include the local PapaParse library -->
+    <script src="papaparse.min.js"></script>
+    <script>
+        // Predefined path to the CSV file
+        const csvFilePath = './static/output.csv'; // Change this to your CSV file path
+
+        // Load the CSV file using Fetch API
+        fetch(csvFilePath)
+            .then(response => response.text())
+            .then(csvContent => {
+                Papa.parse(csvContent, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        window.data = results.data.map(row => ({
+                            bbox: row[0].replace(/[\[\]]/g, '').split(',').slice(0, -1).join(','),
+                            bbox_large: row[1].replace(/[\[\]]/g, '').split(',').slice(0, -1).join(','),
+                            output: row[2]
+                        }));
+                        console.log("CSV Data Loaded: ", window.data);
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading CSV file:', error));
+
+        document.getElementById('startButton').addEventListener('click', function() {
+            // Show the modal
+            document.getElementById('imageModal').style.display = "block";
+            // Load the image into the modal
+            document.getElementById('imageContainer').innerHTML = '<img id="image" src="https://via.placeholder.com/600x400" alt="Clickable Image" style="width: 100%; height: auto;">';
+
+            document.getElementById('image').addEventListener('click', function(event) {
+                // Remove any existing dot or bounding boxes
+                document.querySelectorAll('.dot, .bbox, .bbox-large').forEach(elem => elem.remove());
+
+                let x = event.offsetX;
+                let y = event.offsetY;
+
+     document.getElementById('coordinates').innerText = `Point input to ToL agent: (x,y) = (${x}, ${y})`;
+                // Draw the click point dot
+                let dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.left = `${x - 5}px`; // Adjusting to center the dot on click
+                dot.style.top = `${y - 5}px`;  // Adjusting to center the dot on click
+                document.getElementById('imageContainer').appendChild(dot);
+
+                // Find the smallest bbox that contains the point
+                let minArea = Infinity;
+                let selectedRow = null;
+                window.data.forEach(row => {
+                    console.log("Row Data: ", row); // Log the entire row to see its structure
+                    if (row.bbox && row.bbox_large) { // Ensure bbox and bbox_large exist
+                        const bbox = row.bbox.split(',').map(Number);
+                        const [bx, by, bw, bh] = bbox;
+                        console.log(`Checking bbox: ${bbox} with click coordinates: (${x}, ${y})`);
+                        if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
+                            const area = bw * bh;
+                            console.log(`Click is inside bbox: ${bbox} with area: ${area}`);
+                            if (area < minArea) {
+                                minArea = area;
+                                selectedRow = row;
+                            }
+                        } else {
+                            console.log(`Click is outside bbox: ${bbox}`);
+                        }
+                    }
+                });
+
+                if (selectedRow) {
+                    console.log("Selected Row: ", selectedRow);
+				document.getElementById('output_description').innerText = `Output from ToL agent: ${selectedRow['output']}`;
+                    const bbox = selectedRow.bbox.split(',').map(Number);
+                    const bboxLarge = selectedRow.bbox_large.split(',').map(Number);
+
+                    // Draw bbox
+                    const bboxDiv = document.createElement('div');
+                    bboxDiv.className = 'bbox';
+                    bboxDiv.style.left = `${bbox[0]}px`;
+                    bboxDiv.style.top = `${bbox[1]}px`;
+                    bboxDiv.style.width = `${bbox[2]}px`;
+                    bboxDiv.style.height = `${bbox[3]}px`;
+                    document.getElementById('imageContainer').appendChild(bboxDiv);
+
+                    // Draw bbox_large
+                    const bboxLargeDiv = document.createElement('div');
+                    bboxLargeDiv.className = 'bbox-large';
+                    bboxLargeDiv.style.left = `${bboxLarge[0]}px`;
+                    bboxLargeDiv.style.top = `${bboxLarge[1]}px`;
+                    bboxLargeDiv.style.width = `${bboxLarge[2]}px`;
+                    bboxLargeDiv.style.height = `${bboxLarge[3]}px`;
+                    document.getElementById('imageContainer').appendChild(bboxLargeDiv);
+                } else {
+                    console.log("No bounding box contains the click point.");
+                }
+            });
+        });
+
+        // Close the modal when the user clicks on <span> (x)
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('imageModal').style.display = "none";
+        });
+
+        // Close the modal if the user clicks anywhere outside of the modal content
+        window.addEventListener('click', function(event) {
+            if (event.target == document.getElementById('imageModal')) {
+                document.getElementById('imageModal').style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
