@@ -134,8 +134,16 @@
             border: 8px solid blue; /* Green border for bbox_large */
         }
         crowd-alert {
-      display: none !important;
-    }
+            display: none !important;
+        }
+        
+        /* Tab functionality */
+        .tab-content .tab-pane {
+            display: none;
+        }
+        .tab-content .tab-pane.is-active {
+            display: block;
+        }
   </style>
   
 </head>
@@ -243,7 +251,11 @@
     <div class="columns is-centered">
       <div class="column is-10">
         <h3 style="text-align: left; margin-top: 15px;">
-          <strong>GRIT:</strong> Teaching MLLMs to <strong>think with images</strong> by generating reasoning chains that interleave <strong>natural language with bounding boxes</strong>. Key innovations: (1) <strong>Grounded Reasoning Paradigm</strong> - explicit visual references in reasoning; (2) <strong>GRPO-GR</strong> - reinforcement learning with just <strong>20 training samples</strong>; no manual reasoning annotations needed.
+          <strong>GRIT:</strong> Teaching MLLMs to <strong>think with images</strong> by generating reasoning chains that interleave <strong>natural language with bounding boxes</strong>.
+          <br><br>
+          Key innovations: 
+          <br>(1) <strong>Grounded Reasoning Paradigm</strong> - models generate reasoning chains interleaving natural language with explicit bounding box coordinates.
+          <br>(2) <strong>GRPO-GR</strong> - a reinforcement learning algorithm, which employs novel rewards that enable the grounded reasoning ability of MLLMs efficiently; no manual reasoning annotations needed
         </h3>
       </div>
     </div>
@@ -272,7 +284,7 @@
           <div style="font-family: monospace; font-size: 16px; line-height: 1.4; white-space: pre-wrap; text-align: left;">
 <span style="color: #1e88e5; font-weight: bold;">&lt;think&gt;</span> <span style="color: #666666; font-style: italic;">Initial natural language reasoning with bounding boxes generated...</span> <span style="color: #666666; font-weight: bold;">[x1,y1,x2,y2]</span>  <span style="color: #666666; font-style: italic;">...</span>  <span style="color: #1e88e5; font-weight: bold;">&lt;/think&gt;</span>
 <span style="color: #4caf50; font-weight: bold;">&lt;rethink&gt;</span> <span style="color: #666666; font-style: italic;">Reasoning continues, with further analysis on image regions... </span> <span style="color: #4caf50; font-weight: bold;">&lt;/rethink&gt;</span>
-<span style="color: #ff5722; font-weight: bold;">Answer: </span><span style="color: #666666; font-style: italic;">Final response</span>
+<span style="color: #ff5722; font-weight: bold;">&lt;answer&gt; </span><span style="color: #666666; font-style: italic;">Final response</span>
           </div>
         </div>
         
@@ -320,9 +332,9 @@
     <div class="columns is-centered">
       <div class="column is-10">
         <h3 style="text-align: left; margin-top: 20px;">
-          <p>GRIT employs GRPO-GR, a reinforcement learning approach that optimizes a policy π<sub>θ</sub> to generate reasoning sequences with three key reward components:</p>
+          <p>GRIT employs GRPO-GR, a reinforcement learning approach that optimizes a policy π<sub>θ</sub> to generate grounded reasoning sequences with three key reward components:</p>
           
-          <p><strong>1. Grounded-reasoning-format reward (r<sub>format</sub>):</strong> Encourages proper use of reasoning structure tokens and valid bounding box syntax</p>
+          <p><strong>1. Grounded-reasoning-format reward (r<sub>format</sub>):</strong> Encourages proper use of reasoning structure-related special tokens and valid bounding box syntax</p>
           
           <p><strong>2. Grounded-target-counting reward (r<sub>count</sub>):</strong> For counting tasks, verifies the number of bounding boxes matches the ground-truth count</p>
           
@@ -335,25 +347,187 @@
   </div>
 </section>
 
+
 <section class="section">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-five-fifths">
-        <h2 class="title is-3">Experimental Results</h2> 
+        <h2 class="title is-3">Main Results</h2> 
       </div>
     </div>
-
+    
     <div class="columns is-centered has-text-centered">
-      <div class="image-container" style="width: 70%;box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
-        <img src="./static/image/results.png" alt="Experimental Results">
+      <div class="image-container" style="width: 80%;box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+        <img src="./static/image/results.png" alt="GRPO-GR Method">
       </div>
     </div>
-    <h3 style="text-align: left;">
-      Comprehensive evaluations demonstrate that GRIT effectively trains MLLMs to produce coherent and visually grounded reasoning chains. The results show a successful unification of reasoning and grounding abilities, with GRIT outperforming baseline methods in terms of both reasoning quality and visual grounding accuracy.
-    </h3>
+    <div class="columns is-centered">
+      <div class="column is-10">
+        <h3 style="text-align: left; margin-top: 20px;">
+          <p>
+           Directly using the GRIT method with GRPO-GR reinforcement learning, we train two pre-trained MLLMs, Qwen2.5-VL-3B and InternVL-3-2B, with only <strong>20 image-question-answer triplets</strong> from existing datasets, VSR and TallyQA. Comprehensive evaluations demonstrate that GRIT-trained models overall outperform baselines across six testing sets 
+            <a href="#" class="button is-small is-rounded is-dark" style="display: inline-flex; align-items: center; margin: 0 5px; padding: 0 10px; height: 24px; vertical-align: middle;">
+              <span class="icon is-small" style="margin-right: 2px;">
+                <i class="fas fa-database"></i>
+              </span>
+              <span style="font-size: 12px;">Datasets</span>
+            </a>
+            . </p>
+            <p style="margin-top: 10px;"><strong>Metrics:</strong></p>
+            <ul style="margin-left: 20px;">
+              <li><strong>GPT-as-judge answer accuracy (ACC):</strong> Measures answer correctness using GPT-4o as judge (0-1 score)</li>
+              <li><strong>Grounding IoU (GIoU):</strong> Measures alignment between model-generated bounding boxes and ground-truth regions</li>
+            </ul>
+            <p>Results confirm that GRIT effectively <strong>unifies</strong> previously separated <strong>grounding and reasoning capabilities</strong> in MLLMs efficiently and effectively, achieving strong performance across diverse visual reasoning tasks.</p>
+        </h3>
+      </div>
+    </div>
   </div>
 </section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-five-fifths">
+        <h2 class="title is-3">Examples</h2> 
+      </div>
+    </div>
     
+    <!-- Tabs navigation -->
+    <div class="tabs is-centered is-boxed">
+      <ul>
+        <li class="is-active" data-tab="1">
+          <a>
+            <span>Example 1: Counting</span>
+          </a>
+        </li>
+        <li data-tab="2">
+          <a>
+            <span>Example 2: Spatial Reasoning</span>
+          </a>
+        </li>
+        <li data-tab="3">
+          <a>
+            <span>Example 3: Absence Handling</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Tab content -->
+    <div class="tab-content">
+      <!-- Example 1 -->
+      <div class="tab-pane is-active" id="tab-1">
+        <div class="columns is-centered">
+          <div class="column is-10">
+            <h3 style="margin-bottom: 15px; font-weight: bold; text-align: center;">Model provides an answer with regions and then reflects on it in the subsequent reasoning.</h3>
+            <div class="image-container" style="width: 100%; margin-bottom: 20px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <img src="./static/image/eg1.png" alt="Example 1" style="width: 100%; max-height: 400px; object-fit: contain;">
+            </div>
+            <div style="background-color: white; border: 1px solid #ddd; border-radius: 5px; padding: 15px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <p><strong>Question:</strong> How many zebras are pictured here?</p>
+              <div style="margin-top: 10px;">
+                <p><strong>Model output:</strong></p>
+                <div style="font-family: monospace; font-size: 14px; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;think&gt;</span><br>
+                  There are six zebras in the picture. The coordinates for the zebras are as follows:<br>
+                  1. (200, 168, 248, 202)<br>
+                  2. (169, 159, 214, 186)<br>
+                  3. (76, 167, 108, 192)<br>
+                  4. (24, 173, 50, 197)<br>
+                  5. (51, 163, 70, 191)<br>
+                  6. (413, 159, 441, 189)<br>
+                  7. (463, 171, 483, 186)<br>
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;/think&gt;</span>
+                  <br><br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;rethink&gt;</span><br>
+                  The coordinates provided for the zebras are accurate and cover all the zebras visible in the image. There are no overlapping or missing coordinates.<br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;/rethink&gt;</span>
+                  <br><br>
+                  <span style="color: #ff5722; font-weight: bold;">&lt;answer&gt;</span><br>
+                  7<br>
+                  
+                </div>
+              </div>
+              <p style="margin-top: 10px;"><strong>Ground truth answer:</strong> 7</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Example 2 -->
+      <div class="tab-pane" id="tab-2">
+        <div class="columns is-centered">
+          <div class="column is-10">
+            <h3 style="margin-bottom: 15px; font-weight: bold; text-align: center;">Model first grounds critical image region in its reasoning and then analyzes in the subsequent reasoning.</h3>
+            <div class="image-container" style="width: 100%; margin-bottom: 20px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <img src="./static/image/eg2.png" alt="Example 2" style="width: 100%; max-height: 400px; object-fit: contain;">
+            </div>
+            <div style="background-color: white; border: 1px solid #ddd; border-radius: 5px; padding: 15px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <p><strong>Question:</strong> Is the truck beneath the cat?</p>
+              <div style="margin-top: 10px;">
+                <p><strong>Model output:</strong></p>
+                <div style="font-family: monospace; font-size: 14px; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;think&gt;</span><br>
+                  The bounding box coordinates for the truck are approximately (0, 209, 488, 364). The cat is positioned on top of this truck.<br>
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;/think&gt;</span>
+                  <br><br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;rethink&gt;</span><br>
+                  The cat is on top of the truck, so the truck is beneath the cat.<br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;/rethink&gt;</span>
+                  <br><br>
+                  <span style="color: #ff5722; font-weight: bold;">&lt;answer&gt;</span><br>
+                  Yes<br>
+                  
+                </div>
+              </div>
+              <p style="margin-top: 10px;"><strong>Ground truth answer:</strong> Yes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Example 3 -->
+      <div class="tab-pane" id="tab-3">
+        <div class="columns is-centered">
+          <div class="column is-10">
+            <h3 style="margin-bottom: 15px; font-weight: bold; text-align: center;">Model correctly handles queries about non-existent entities without any grounding action.</h3>
+            <div class="image-container" style="width: 100%; margin-bottom: 20px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <img src="./static/image/eg3.jpg" alt="Example 3" style="width: 100%; max-height: 400px; object-fit: contain;">
+            </div>
+            <div style="background-color: white; border: 1px solid #ddd; border-radius: 5px; padding: 15px; box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);">
+              <p><strong>Question:</strong> Is there a knife in the image?</p>
+              <div style="margin-top: 10px;">
+                <p><strong>Model output:</strong></p>
+                <div style="font-family: monospace; font-size: 14px; background-color: #f9f9f9; padding: 10px; border-radius: 5px;">
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;think&gt;</span><br>
+                  There is no knife present in the image. The focus is on a pot of soup with carrots and other ingredients. The bounding box coordinates for the knife would be outside the image area.<br>
+                  <span style="color: #1e88e5; font-weight: bold;">&lt;/think&gt;</span>
+                  <br><br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;rethink&gt;</span><br>
+                  The image shows a pot of soup with carrots and other ingredients, but there is no knife present. The bounding box coordinates for the knife would be outside the image area.<br>
+                  <span style="color: #4caf50; font-weight: bold;">&lt;/rethink&gt;</span>
+                  <br><br>
+                  <span style="color: #ff5722; font-weight: bold;">&lt;answer&gt;</span><br>
+                  No<br>
+                  
+                </div>
+              </div>
+              <p style="margin-top: 10px;"><strong>Ground truth answer:</strong> No</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="columns is-centered" style="margin-top: 30px;">
+      <div class="column is-10">
+        <p class="has-text-centered">Inference examples of Qwen2.5-VL-GRIT.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="section" id="BibTeX">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
@@ -389,6 +563,36 @@
 
 <!-- Additional libraries for parsing CSV -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.21/jquery.csv.min.js"></script>
+
+<!-- Tab functionality for Examples section -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Get all tabs
+  const tabs = document.querySelectorAll('.tabs li');
+  const tabContentPanes = document.querySelectorAll('.tab-content .tab-pane');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove 'is-active' class from all tabs
+      tabs.forEach(item => {
+        item.classList.remove('is-active');
+      });
+      
+      // Add 'is-active' class to clicked tab
+      tab.classList.add('is-active');
+      
+      // Hide all tab panes
+      tabContentPanes.forEach(pane => {
+        pane.classList.remove('is-active');
+      });
+      
+      // Show the corresponding tab pane
+      const tabId = tab.getAttribute('data-tab');
+      document.getElementById('tab-' + tabId).classList.add('is-active');
+    });
+  });
+});
+</script>
 
 </body>
 </html>
